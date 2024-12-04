@@ -1,0 +1,158 @@
+﻿@using System.Web
+@using System.Text.RegularExpressions;
+@using System.Linq;
+
+@page "/harmony"
+@rendermode InteractiveServer
+
+<div class="row">
+	<div class="col border p-3">
+		<h3>Harmony of the 4 Gospels</h3> <hr />@* 
+
+	</div>
+	<div class="col-6 border p-3"> *@
+		<div class="row">
+			<div class="col-4 my-auto overflow-auto">
+				<div class="input-group">
+					<span class="input-group-text">Selected Story is : @selectedStory</span>
+				</div>
+			</div>
+			<div class="col-2 ">
+				<button class="btn btn-dark mx-auto d-block" @onclick="LoadPreviousStory">Previous Story</button>
+			</div>
+			<div class="col-4">
+				<select value="@selectedStory" @onchange="OnSelectionChangedEvent" class="form-select mx-auto d-block">
+					@foreach (HarmonyBibleVerse hmVerse in HarmonyBibleVerses)
+					{
+						if (hmVerse.IsHeading())
+						{
+							<option class="bg-success-subtle disabled" value="@hmVerse.Story">@hmVerse.Story</option>
+						}
+						else
+						{
+							<option value="@hmVerse.Story">@hmVerse.Story</option>
+						}
+					}
+				</select>
+			</div>
+			<div class="col-2">
+				<button class="btn btn-dark mx-auto d-block" @onclick="LoadNextStory">Next Story</button>
+			</div>
+		</div>
+	</div>
+</div>
+<div class="row">
+	<div class="col-md-3 border p-3">
+		<span class="badge text-bg-primary" @* sticky-top" style="top:4vw" *@>Gospel of Matthew</span> <hr />
+		<MarkupText InputValue="@passageMatthew"></MarkupText>
+	</div>
+	<div class="col-md-3 border p-3">
+		<span class="badge text-bg-primary" @* sticky-top" style="top:4vw"*@> Gospel of Mark</span> <hr />
+		<MarkupText InputValue="@passageMark"></MarkupText>
+	</div>
+	<div class="col-md-3 border p-3">
+		<span class="badge text-bg-primary" @* sticky-top" style="top:4vw" *@>Gospel of Luke</span> <hr />
+		<MarkupText InputValue="@passageLuke"></MarkupText>
+	</div>
+	<div class="col-md-3 border p-3">
+		<span class="badge text-bg-primary" @* sticky-top" style="top:4vw" *@>Gospel of John</span> <hr />
+		<MarkupText InputValue="@passageJohn"></MarkupText>
+	</div>
+</div>
+
+
+@code {
+	string filePath = "C:\\Users\\Nightwing\\Downloads\\Harmony of the gospels.csv";
+	List<String> stories = new();
+	List<HarmonyBibleVerse> HarmonyBibleVerses = new();
+	public string selectedStory { get; set; } = String.Empty;
+	HarmonyProcessor harmonyProcessor;
+	HarmonyBibleVerse harmonyBibleVerse;
+	HarmonyBibleVerse selectedHarmonyBibleVerse = new();
+
+	string passageMatthew;
+	string passageMark;
+	string passageLuke;
+	string passageJohn;
+
+	protected override void OnInitialized()
+	{
+		harmonyBibleVerse = new();
+		harmonyProcessor = new(filePath);
+		ResetResponses();
+
+		HarmonyBibleVerses = harmonyProcessor.ReadHarmonyFile();
+		HarmonyBibleVerses.RemoveAt(0);
+
+	}
+	private async void OnSelectionChangedEvent(ChangeEventArgs e)
+	{
+		await GetVerse(e.Value.ToString());
+	}
+
+	private async Task GetVerse(string value)
+	{
+		selectedStory = value;
+		selectedHarmonyBibleVerse = HarmonyBibleVerses.Where(x => x.Story == selectedStory).FirstOrDefault();
+
+		harmonyBibleVerse = harmonyProcessor.GetVersesByStory(selectedStory);
+		ResetResponses();
+
+		APIHelper apiHelper = new();
+
+		//TODO - Send as one request
+		// List<string> bookChapterVerses = new();
+
+		// // bookChapterVerses.Add(harmonyBibleVerse.Ma)
+		var responseMatthew = await apiHelper.GetVerses(HarmonyBibleVerse.MatthewName, harmonyBibleVerse.MatthewVerse.Trim());
+		var responseMark = await apiHelper.GetVerses(HarmonyBibleVerse.MarkName, harmonyBibleVerse.MarkVerse.Trim());
+		var responseLuke = await apiHelper.GetVerses(HarmonyBibleVerse.LukeName, harmonyBibleVerse.LukeVerse.Trim());
+		var responseJohn = await apiHelper.GetVerses(HarmonyBibleVerse.JohnName, harmonyBibleVerse.JohnVerse.Trim());
+
+		UpdatePassage(responseMatthew, responseMark, responseLuke, responseJohn);
+	}
+
+	private void ResetResponses()
+	{
+		passageMatthew = string.Empty;
+		passageMark = string.Empty;
+		passageLuke = string.Empty;
+		passageJohn = string.Empty;
+		StateHasChanged();
+	}
+
+	private void UpdatePassage(ApiResponse responseMatthew, ApiResponse responseMark, ApiResponse responseLuke, ApiResponse responseJohn)
+	{
+		passageMatthew = responseMatthew.DisplayPassage();
+		passageMark = responseMark.DisplayPassage();
+		passageLuke = responseLuke.DisplayPassage();
+		passageJohn = responseJohn.DisplayPassage();
+		StateHasChanged();
+	}
+
+	private async Task LoadPreviousStory(EventArgs e)
+	{
+		var indexOfCurrent = HarmonyBibleVerses.IndexOf(selectedHarmonyBibleVerse);
+
+		if (HarmonyBibleVerses[--indexOfCurrent].IsHeading())
+		{
+			//Skip any headings
+			--indexOfCurrent;
+		}
+
+		await GetVerse(HarmonyBibleVerses[indexOfCurrent].Story);
+	}
+
+	private async Task LoadNextStory()
+	{
+		var indexOfCurrent = HarmonyBibleVerses.IndexOf(selectedHarmonyBibleVerse);
+
+		if (HarmonyBibleVerses[++indexOfCurrent].IsHeading())
+		{
+			//Skip any headings
+			++indexOfCurrent;
+		}
+
+		await GetVerse(HarmonyBibleVerses[indexOfCurrent].Story);
+	}
+}
