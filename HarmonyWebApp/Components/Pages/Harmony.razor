@@ -43,19 +43,35 @@
 </div>
 <div class="row">
 	<div class="col-md-3 border p-3">
-		<span class="badge text-bg-primary" @* sticky-top" style="top:4vw" *@>Gospel of Matthew</span> <hr />
+		<span class="badge text-bg-primary" @* sticky-top" style="top:4vw" *@>Gospel of Matthew</span>
+		<button class="btn btn-dark badge" @onclick="()=>FetchFullChapter(BookName.Matthew)">Expand</button>
+		<hr />
 		<MarkupText InputValue="@passageMatthew"></MarkupText>
 	</div>
 	<div class="col-md-3 border p-3">
-		<span class="badge text-bg-primary" @* sticky-top" style="top:4vw"*@> Gospel of Mark</span> <hr />
+		<span class="badge text-bg-primary" @* sticky-top" style="top:4vw" *@> Gospel of Mark</span>
+		<button class="btn btn-dark badge" @onclick="()=>FetchFullChapter(BookName.Mark)">Expand</button>
+		<hr />
 		<MarkupText InputValue="@passageMark"></MarkupText>
 	</div>
 	<div class="col-md-3 border p-3">
-		<span class="badge text-bg-primary" @* sticky-top" style="top:4vw" *@>Gospel of Luke</span> <hr />
+		<span class="badge text-bg-primary" @* sticky-top" style="top:4vw" *@>Gospel of Luke</span>
+		<button class="btn btn-dark badge" @onclick="()=>FetchFullChapter(BookName.Luke)">Expand</button>
+		<hr />
 		<MarkupText InputValue="@passageLuke"></MarkupText>
 	</div>
 	<div class="col-md-3 border p-3">
-		<span class="badge text-bg-primary" @* sticky-top" style="top:4vw" *@>Gospel of John</span> <hr />
+		<span class="badge text-bg-primary" @* sticky-top" style="top:4vw" *@>Gospel of John</span>
+		<button class="btn btn-dark badge" @onclick="()=>FetchFullChapter(BookName.John)">Expand</button>
+		@if (isExpanded)
+		{
+			<button class="btn btn-danger badge mx-1" @onclick="()=>LoadStory()">Unexpand All</button>
+		}
+		else
+		{
+			<button class="btn btn-success badge mx-1" @onclick="()=>FetchFullChapter(BookName.All)">Expand All</button>
+		}
+		<hr />
 		<MarkupText InputValue="@passageJohn"></MarkupText>
 	</div>
 </div>
@@ -74,6 +90,8 @@
 	string passageMark;
 	string passageLuke;
 	string passageJohn;
+
+	bool isExpanded = false;
 
 	protected override void OnInitialized()
 	{
@@ -98,12 +116,18 @@
 		harmonyBibleVerse = harmonyProcessor.GetVersesByStory(selectedStory);
 		ResetResponses();
 
-		APIHelper apiHelper = new();
-
 		//TODO - Send as one request
 		// List<string> bookChapterVerses = new();
 
 		// // bookChapterVerses.Add(harmonyBibleVerse.Ma)
+		await LoadStory();
+	}
+
+	private async Task LoadStory()
+	{
+		isExpanded = false;
+		APIHelper apiHelper = new();
+
 		var responseMatthew = await apiHelper.GetVerses(HarmonyBibleVerse.MatthewName, harmonyBibleVerse.MatthewVerse.Trim());
 		var responseMark = await apiHelper.GetVerses(HarmonyBibleVerse.MarkName, harmonyBibleVerse.MarkVerse.Trim());
 		var responseLuke = await apiHelper.GetVerses(HarmonyBibleVerse.LukeName, harmonyBibleVerse.LukeVerse.Trim());
@@ -121,12 +145,28 @@
 		StateHasChanged();
 	}
 
-	private void UpdatePassage(ApiResponse responseMatthew, ApiResponse responseMark, ApiResponse responseLuke, ApiResponse responseJohn)
+	private void UpdatePassage(ApiResponse responseMatthew = null, ApiResponse responseMark = null, ApiResponse responseLuke = null, ApiResponse responseJohn = null)
 	{
-		passageMatthew = responseMatthew.DisplayPassage();
-		passageMark = responseMark.DisplayPassage();
-		passageLuke = responseLuke.DisplayPassage();
-		passageJohn = responseJohn.DisplayPassage();
+		if (responseMatthew != null)
+		{
+			passageMatthew = responseMatthew.DisplayPassage();
+		}
+
+		if (responseMark != null)
+		{
+			passageMark = responseMark.DisplayPassage();
+		}
+
+		if (responseLuke != null)
+		{
+			passageLuke = responseLuke.DisplayPassage();
+		}
+
+		if (responseJohn != null)
+		{
+			passageJohn = responseJohn.DisplayPassage();
+		}
+
 		StateHasChanged();
 	}
 
@@ -154,5 +194,37 @@
 		}
 
 		await GetVerse(HarmonyBibleVerses[indexOfCurrent].Story);
+	}
+
+	private async void FetchFullChapter(BookName book = BookName.All)
+	{
+		APIHelper aPIHelper = new();
+
+		switch (book)
+		{
+
+			case BookName.Matthew:
+				UpdatePassage(responseMatthew: await aPIHelper.GetBook(HarmonyBibleVerse.MatthewName, string.Join(';', harmonyBibleVerse.MatthewChapters)));
+				break;
+			case BookName.Mark:
+				UpdatePassage(responseMark: await aPIHelper.GetBook(HarmonyBibleVerse.MarkName, string.Join(';', harmonyBibleVerse.MarkChapters)));
+				break;
+			case BookName.Luke:
+				UpdatePassage(responseLuke: await aPIHelper.GetBook(HarmonyBibleVerse.LukeName, string.Join(';', harmonyBibleVerse.LukeChapters)));
+				break;
+			case BookName.John:
+				UpdatePassage(responseJohn: await aPIHelper.GetBook(HarmonyBibleVerse.JohnName, string.Join(';', harmonyBibleVerse.JohnChapters)));
+				break;
+
+			default:
+				isExpanded = true;
+				var responseMatthew = await aPIHelper.GetBook(HarmonyBibleVerse.MatthewName, string.Join(';', harmonyBibleVerse.MatthewChapters));
+				var responseMark = await aPIHelper.GetBook(HarmonyBibleVerse.MarkName, string.Join(';', harmonyBibleVerse.MarkChapters));
+				var responseLuke = await aPIHelper.GetBook(HarmonyBibleVerse.LukeName, string.Join(';', harmonyBibleVerse.LukeChapters));
+				var responseJohn = await aPIHelper.GetBook(HarmonyBibleVerse.JohnName, string.Join(';', harmonyBibleVerse.JohnChapters));
+
+				UpdatePassage(responseMatthew, responseMark, responseLuke, responseJohn);
+				break;
+		}
 	}
 }

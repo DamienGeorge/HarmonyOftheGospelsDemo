@@ -38,6 +38,80 @@ namespace BibleLibrary.Models
                 return false;
             }
         }
+
+        public string MatthewChapters
+        {
+            get
+            {
+                return GetChapterFromVerse(MatthewVerse);
+            }
+        }
+
+        public string MarkChapters
+        {
+            get
+            {
+                return GetChapterFromVerse(MarkVerse);
+            }
+        }
+
+        public string LukeChapters
+        {
+            get
+            {
+                return GetChapterFromVerse(LukeVerse);
+            }
+        }
+
+        public string JohnChapters
+        {
+            get
+            {
+                return GetChapterFromVerse(JohnVerse);
+            }
+        }
+        private string GetChapterFromVerse(string verse)
+        {
+            verse = verse.Trim();
+            if (string.IsNullOrEmpty(verse) == false)
+            {
+
+                List<string> verses = new();
+                List<string> chapters = new();
+
+                if (verse.Contains(';'))
+                {
+                    verses = verse.Split(';').ToList();
+                }
+                else
+                {
+                    verses.Add(verse);
+                }
+
+                foreach (var entry in verses)
+                {
+                    var chapter = entry.Substring(0, verse.IndexOf(':'));
+
+                    if (chapters.Contains(chapter) == false)
+                    {
+                        chapters.Add(chapter);
+                    }
+                }
+                return string.Join(';', chapters);
+            }
+            else
+            {
+                return default;
+            }
+        }
     }
 
+    public enum BookName
+    {
+        Matthew,
+        Mark,
+        Luke,
+        John,
+        All
+    }
 }

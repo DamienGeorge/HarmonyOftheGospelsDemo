@@ -26,6 +26,19 @@ namespace BibleLibrary
             return await SendGetRequest(endpoint);
         }
 
+        public async Task<ApiResponse> GetBook(string book,string chapter)
+        {
+            if (String.IsNullOrEmpty(book) || string.IsNullOrEmpty(chapter))
+            {
+                return new ApiResponse();
+            }
+
+            var endpoint = $"{apiUrl}?q={book}+{chapter}";
+
+            return await SendGetRequest(endpoint);
+
+        }
+
         public async Task<ApiResponse> GetVerses(string[] bookChapterWithVerses)
         {
             var endpoint = $"{apiUrl}?q={string.Join(";", bookChapterWithVerses)}";
