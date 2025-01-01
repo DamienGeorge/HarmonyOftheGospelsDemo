@@ -78,7 +78,6 @@
 
 
 @code {
-	string filePath = "C:\\Users\\Nightwing\\Downloads\\Harmony of the gospels.csv";
 	List<String> stories = new();
 	List<HarmonyBibleVerse> HarmonyBibleVerses = new();
 	public string selectedStory { get; set; } = String.Empty;
@@ -96,7 +95,7 @@
 	protected override void OnInitialized()
 	{
 		harmonyBibleVerse = new();
-		harmonyProcessor = new(filePath);
+		harmonyProcessor = new();
 		ResetResponses();
 
 		HarmonyBibleVerses = harmonyProcessor.ReadHarmonyFile();

@@ -7,6 +7,12 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Content Include="Harmony of the gospels.csv">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\BibleLibrary\BibleLibrary.csproj" />
     <ProjectReference Include="..\HarmonyOftheGospelsDemo.ServiceDefaults\HarmonyOftheGospelsDemo.ServiceDefaults.csproj" />
   </ItemGroup>

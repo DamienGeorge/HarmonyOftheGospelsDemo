@@ -1,20 +1,15 @@
 ﻿using BibleLibrary.Models;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace BibleLibrary
 {
-    public class CSVHelper
+    public class HarmonyProcessor
     {
-        public string FilePath { get; set; }
-        public CSVHelper(string filePath)
-        {
-            FilePath = filePath;
-        }
+        private string filePath;
 
+        public HarmonyProcessor()
+        {
+            filePath = "Harmony of the gospels.csv";
+        }
 
         public List<string> GetStories()
         {
@@ -24,12 +19,12 @@ namespace BibleLibrary
             return stories;
         }
 
-        private List<HarmonyBibleVerse> ReadHarmonyFile()
+        public List<HarmonyBibleVerse> ReadHarmonyFile()
         {
             List<HarmonyBibleVerse> harmonyBibleVerses = new();
             try
             {
-                var fileData = File.ReadAllLines(FilePath);
+                var fileData = File.ReadAllLines(filePath);
 
                 foreach (var line in fileData)
                 {
@@ -73,3 +68,5 @@ namespace BibleLibrary
         }
     }
 }
+
+
